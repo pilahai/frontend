@@ -18,8 +18,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, computed } from 'vue';
 
-// --- PROPS ---
-// Properti yang bisa di-pass dari komponen induk
 const props = defineProps({
   width: {
     type: [Number, String],
@@ -29,10 +27,9 @@ const props = defineProps({
     type: [Number, String],
     default: 480,
   },
-  // Prop untuk menerima filter CSS
   filter: {
     type: String,
-    default: 'none', // contoh: 'grayscale(100%)', 'sepia(100%)', 'blur(5px)'
+    default: 'none',
   },
   autoplay: {
     type: Boolean,
@@ -40,59 +37,33 @@ const props = defineProps({
   }
 });
 
-// --- EMITS ---
-// Event yang dikirim ke komponen induk
 const emit = defineEmits(['snapshot', 'stream-started', 'stream-stopped', 'error']);
 
-// --- REFS ---
-// Referensi ke elemen DOM
 const videoRef = ref<HTMLVideoElement | null>(null);
 const canvasRef = ref<HTMLCanvasElement | null>(null);
 
-// State internal komponen
 const stream = ref<MediaStream | null>(null);
 const isStreaming = ref<boolean>(false);
+const isPortrait = ref(false);
 
-// --- COMPUTED PROPERTIES ---
-// Mengaplikasikan filter secara reaktif
 const videoStyle = computed(() => ({
   filter: props.filter,
-  transform: 'scaleX(-1)', // Efek cermin/mirror
+  transform: 'scaleX(-1)',
   width: props.width,
   height: props.height,
-  // width: '--webkit-fill-available',
-  // height: '--webkit-fill-available',
 }));
 
 const widthToNumber = computed(() : number => {
     var videoRefWidth = videoRef.value?.clientWidth;
     return videoRefWidth ?? 0;
-    // if (typeof props.width === 'string' && props.width.endsWith('%') && videoRefWidth) {
-    //     return (parseInt(props.width, 10) / 100) * videoRefWidth;
-    // } else if (typeof props.width === 'string' && props.width.endsWith('vw') && videoRefWidth) {
-    //     return (parseInt(props.width, 10) / 100) * window.innerWidth;
-    // }
-
-    // return parseInt(props.width as string, 10);
 });
 
 const heightToNumber = computed(() : number => {
     var videoRefHeight = videoRef.value?.clientHeight;
 
     return videoRefHeight ?? 0;
-    // if (typeof props.height === 'string' && props.height.endsWith('%') && videoRefHeight) {
-    //     return (parseInt(props.height, 10) / 100) * videoRefHeight;
-    // } else if (typeof props.height === 'string' && props.height.endsWith('vh') && videoRefHeight) {
-    //     return (parseInt(props.height, 10) / 100) * window.innerHeight;
-    // }
-
-    // return parseInt(props.height as string, 10);
 });
 
-// --- METHODS ---
-/**
- * Memulai stream dari webcam.
- */
 const startStream = async () => {
   if (isStreaming.value || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
     emit('error', 'Browser tidak mendukung atau stream sudah berjalan.');
@@ -100,20 +71,27 @@ const startStream = async () => {
   }
 
   try {
-    console.log('widthToNumber.value', widthToNumber.value);
-    console.log('heightToNumber.value', heightToNumber.value);
-    // Meminta akses ke webcam
+    isPortrait.value = window.innerHeight > window.innerWidth;
+
+    const videoConstraints: MediaTrackConstraints = {
+      facingMode: 'user',
+    };
+
+    if (isPortrait.value) {
+      videoConstraints.width = { ideal: heightToNumber.value };
+      videoConstraints.height = { ideal: widthToNumber.value };
+    } else {
+      videoConstraints.width = { ideal: widthToNumber.value };
+      videoConstraints.height = { ideal: heightToNumber.value };
+    }
+
     const mediaStream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        width: widthToNumber.value,
-        height: heightToNumber.value,
-      },
-      audio: false, // Matikan audio agar tidak meminta izin mikrofon
+      video: videoConstraints,
+      audio: false,
     });
 
     stream.value = mediaStream;
 
-    // Menghubungkan stream ke elemen <video>
     if (videoRef.value) {
       videoRef.value.srcObject = mediaStream;
     }
@@ -127,16 +105,11 @@ const startStream = async () => {
   }
 };
 
-/**
- * Menghentikan stream webcam.
- */
 const stopStream = () => {
   if (!stream.value) return;
 
-  // Menghentikan setiap track video
   stream.value.getTracks().forEach(track => track.stop());
 
-  // Membersihkan state
   if (videoRef.value) {
     videoRef.value.srcObject = null;
   }
@@ -145,10 +118,6 @@ const stopStream = () => {
   emit('stream-stopped');
 };
 
-/**
- * Mengambil snapshot dari video dan mengirimkannya sebagai data URL.
- * @returns {string | null} Data URL gambar dalam format PNG.
- */
 const takeSnapshot = (): string | null => {
   if (!isStreaming.value || !videoRef.value || !canvasRef.value) {
     console.warn('Stream tidak aktif, tidak bisa mengambil snapshot.');
@@ -160,8 +129,6 @@ const takeSnapshot = (): string | null => {
   const context = canvas.getContext('2d');
 
   if (context) {
-    // Menggambar frame saat ini dari video ke canvas
-    // Diberi efek cermin agar sesuai dengan tampilan video
 
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
@@ -169,32 +136,33 @@ const takeSnapshot = (): string | null => {
     context.translate(canvas.width, 0);
     context.scale(-1, 1);
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
-    context.setTransform(1, 0, 0, 1, 0, 0); // Reset transform
+    context.setTransform(1, 0, 0, 1, 0, 0);
 
-    // Mengkonversi canvas ke format data URL (base64)
     const dataUrl = canvas.toDataURL('image/png');
     
-    // Mengirim data URL ke komponen induk
     emit('snapshot', dataUrl);
     return dataUrl;
   }
   return null;
 };
 
-// --- LIFECYCLE HOOKS ---
+const handleResize = () => {
+  isPortrait.value = window.innerHeight > window.innerWidth;
+};
+
 onMounted(() => {
+  window.addEventListener('resize', handleResize);
+  handleResize();
   if (props.autoplay) {
     startStream();
   }
 });
 
-// Sangat penting untuk mematikan kamera saat komponen dihancurkan
 onBeforeUnmount(() => {
+  window.removeEventListener('resize', handleResize);
   stopStream();
 });
 
-// --- EXPOSE ---
-// Mengekspos fungsi agar bisa dipanggil dari komponen induk melalui ref
 defineExpose({
   startStream,
   stopStream,
@@ -207,11 +175,11 @@ defineExpose({
 .webcam-container {
   position: relative;
   display: inline-block;
-  /* border-radius: 8px; */
   overflow: hidden;
   background-color: #222;
 }
 .webcam-container video {
   display: block;
+  object-fit: cover;
 }
 </style>

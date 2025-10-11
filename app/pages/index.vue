@@ -22,13 +22,12 @@
       ref="webcamRef"
       width="100vw"
       height="100vh"
+      :autoplay="true"
       @snapshot="handleSnapshot"
       @error="handleError"
       class="webcam-component"
     >
-      <button @click="startCamera" :disabled="isStreaming" title="Mulai Kamera">▶️</button>
       <button @click="takePicture" :disabled="!isStreaming" title="Ambil Foto">📸</button>
-      <button @click="stopCamera" :disabled="!isStreaming" title="Hentikan Kamera">⏹️</button>
     </Webcam>
 
     <div v-else-if="snapshot" class="snapshot-gallery">
@@ -54,22 +53,18 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import Webcam from '~/components/Webcam.vue'; // Pastikan path benar
+import Webcam from '~/components/Webcam.vue';
 import { usePwa } from '~/composables/usePwa';
 
 const { showInstallButton, installPwa, isPwaInstalled } = usePwa();
 
-// Ref untuk mengakses metode yang di-expose oleh komponen Webcam
 const webcamRef = ref<InstanceType<typeof Webcam> | null>(null);
 
-// State untuk hasil snapshot
 const snapshot = ref<string | null>(null);
 const errorMessage = ref<string | null>(null);
 
-// Mengambil nilai isStreaming dari komponen anak untuk menonaktifkan tombol
 const isStreaming = computed(() => webcamRef.value?.isStreaming ?? false);
 
-// --- Handler untuk tombol ---
 const startCamera = () => {
   snapshot.value = null;
   errorMessage.value = null;
@@ -84,7 +79,6 @@ const takePicture = async () => {
   var url = webcamRef.value?.takeSnapshot();
 
   if (url) {
-    // send the snapshot to clasify API
     const res = await fetch('/api/classify', {
       method: 'POST',
       headers: {
@@ -95,7 +89,6 @@ const takePicture = async () => {
       }),
     });
 
-    // handle reader stream
     const reader = res.body?.getReader();
     if (reader) {
       for await (const { event, data } of parseSSE(reader)) {
@@ -133,7 +126,6 @@ async function* parseSSE(reader : ReadableStreamDefaultReader<Uint8Array>) {
     }
   }
 
-// --- Handler untuk event dari komponen Webcam ---
 const handleSnapshot = (dataUrl: string) => {
   console.log('Foto berhasil diambil!');
   stopCamera();

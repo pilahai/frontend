@@ -3,7 +3,7 @@ import mkcert from 'vite-plugin-mkcert'
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   devServer: {
-    // https: true
+    https: true
   },
   vite: {
     plugins: [
