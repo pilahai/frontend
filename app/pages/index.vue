@@ -20,8 +20,8 @@
     <Webcam
       v-if="!snapshot"
       ref="webcamRef"
-      width="100vw"
-      height="100vh"
+      width="100%"
+      height="100%"
       :autoplay="true"
       @snapshot="handleSnapshot"
       @error="handleError"
@@ -35,8 +35,8 @@
         class="snapshot-image"
         :style="{
           backgroundImage: `url(${snapshot})`,
-          width: '100vw',
-          height: '100vh',
+          width: '100%',
+          height: '100%',
         }"
       ></div>
       <div class="controls">
@@ -146,6 +146,15 @@ const handleError = (error: string) => {
   color: #FFFFFF;
   text-wrap: wrap;
   word-wrap: break-word;
+}
+
+.snapshot-gallery {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: #222;
 }
 
 .snapshot-image {
