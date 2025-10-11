@@ -85,11 +85,11 @@ button:disabled {
   transform: none;
 }
 
-.snapshot-gallery {
+/* .snapshot-gallery {
   margin-top: 2rem;
-}
+} */
 
-.snapshot-gallery img {
+/* .snapshot-gallery img {
   max-width: 100%;
   border-radius: 8px;
   border: 2px solid #ddd;
@@ -108,7 +108,7 @@ button:disabled {
 
 .snapshot-gallery a:hover {
   background-color: #0056b3;
-}
+} */
 
 .error-message {
   margin-top: 1rem;

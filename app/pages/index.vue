@@ -20,8 +20,8 @@
     <Webcam
       v-if="!snapshot"
       ref="webcamRef"
-      width="100%"
-      height="100%"
+      width="100vw"
+      height="100vh"
       @snapshot="handleSnapshot"
       @error="handleError"
       class="webcam-component"
@@ -32,7 +32,14 @@
     </Webcam>
 
     <div v-else-if="snapshot" class="snapshot-gallery">
-      <img :src="snapshot" alt="Hasil jepretan webcam" />
+      <div
+        class="snapshot-image"
+        :style="{
+          backgroundImage: `url(${snapshot})`,
+          width: '100vw',
+          height: '100vh',
+        }"
+      ></div>
       <div class="controls">
         <button @click="startCamera" :disabled="isStreaming" title="Mulai Kamera">▶️</button>
       </div>
@@ -147,6 +154,12 @@ const handleError = (error: string) => {
   color: #FFFFFF;
   text-wrap: wrap;
   word-wrap: break-word;
-  /* backdrop-filter: blur(8px); */
+}
+
+.snapshot-image {
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-position: center;
+  background-color: black;
 }
 </style>

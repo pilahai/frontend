@@ -2,8 +2,6 @@
   <div class="webcam-container">
     <video
       ref="videoRef"
-      :width="width"
-      :height="height"
       :style="videoStyle"
       autoplay
       playsinline
@@ -60,24 +58,35 @@ const isStreaming = ref<boolean>(false);
 const videoStyle = computed(() => ({
   filter: props.filter,
   transform: 'scaleX(-1)', // Efek cermin/mirror
+  width: props.width,
+  height: props.height,
+  // width: '--webkit-fill-available',
+  // height: '--webkit-fill-available',
 }));
 
 const widthToNumber = computed(() : number => {
     var videoRefWidth = videoRef.value?.clientWidth;
-    if (typeof props.width === 'string' && props.width.endsWith('%') && videoRefWidth) {
-        return (parseInt(props.width, 10) / 100) * videoRefWidth;
-    }
+    return videoRefWidth ?? 0;
+    // if (typeof props.width === 'string' && props.width.endsWith('%') && videoRefWidth) {
+    //     return (parseInt(props.width, 10) / 100) * videoRefWidth;
+    // } else if (typeof props.width === 'string' && props.width.endsWith('vw') && videoRefWidth) {
+    //     return (parseInt(props.width, 10) / 100) * window.innerWidth;
+    // }
 
-    return parseInt(props.width as string, 10);
+    // return parseInt(props.width as string, 10);
 });
 
 const heightToNumber = computed(() : number => {
     var videoRefHeight = videoRef.value?.clientHeight;
-    if (typeof props.height === 'string' && props.height.endsWith('%') && videoRefHeight) {
-        return (parseInt(props.height, 10) / 100) * videoRefHeight;
-    }
 
-    return parseInt(props.height as string, 10);
+    return videoRefHeight ?? 0;
+    // if (typeof props.height === 'string' && props.height.endsWith('%') && videoRefHeight) {
+    //     return (parseInt(props.height, 10) / 100) * videoRefHeight;
+    // } else if (typeof props.height === 'string' && props.height.endsWith('vh') && videoRefHeight) {
+    //     return (parseInt(props.height, 10) / 100) * window.innerHeight;
+    // }
+
+    // return parseInt(props.height as string, 10);
 });
 
 // --- METHODS ---
@@ -154,12 +163,12 @@ const takeSnapshot = (): string | null => {
     // Menggambar frame saat ini dari video ke canvas
     // Diberi efek cermin agar sesuai dengan tampilan video
 
-    canvas.width = widthToNumber.value;
-    canvas.height = heightToNumber.value;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
 
     context.translate(canvas.width, 0);
     context.scale(-1, 1);
-    context.drawImage(video, 0, 0, widthToNumber.value, heightToNumber.value);
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
     context.setTransform(1, 0, 0, 1, 0, 0); // Reset transform
 
     // Mengkonversi canvas ke format data URL (base64)
