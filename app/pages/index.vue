@@ -1,15 +1,6 @@
 <template>
   <div class="page-container">
-    <div class="p-4 text-center" v-if="showInstallButton || isPwaInstalled">
-      <p v-if="isPwaInstalled">Aplikasi Pilahai sudah terinstal.</p>
-      <button
-        v-if="showInstallButton"
-        @click="installPwa"
-        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-      >
-        Install Aplikasi
-      </button>
-    </div>
+    <InstallPwa />
     <div class="page-frame">
       <h1 class="">SCAN ITEM</h1>
       <p class="">
@@ -54,9 +45,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import Webcam from '~/components/Webcam.vue';
-import { usePwa } from '~/composables/usePwa';
-
-const { showInstallButton, installPwa, isPwaInstalled } = usePwa();
+import InstallPwa from '~/components/InstallPwa.vue';
 
 const webcamRef = ref<InstanceType<typeof Webcam> | null>(null);
 

@@ -16,14 +16,15 @@ export default defineNuxtConfig({
         {
           rel: 'manifest',
           href: (process.env.NUXT_APP_BASE_URL !== undefined && process.env.NUXT_APP_BASE_URL != '/' ? (process.env.NUXT_APP_BASE_URL + '/') : '') + 'manifest.webmanifest',
-        }
+        },
+        { rel: 'icon', type: 'image/png', href: '/logo-pilahai-square-transparent-192.png' },
       ]
     }
   },
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
-  css: ['~/assets/css/main.css'],
-  modules: ['@vite-pwa/nuxt'],
+  css: ['~/assets/css/main.css', '@mdi/font/css/materialdesignicons.css'],
+  modules: ['@vite-pwa/nuxt', '@nuxtjs/tailwindcss'],
   pwa: {
     strategies: 'generateSW',
     registerType: 'autoUpdate',
@@ -36,20 +37,14 @@ export default defineNuxtConfig({
       theme_color: '#ffffff',
       icons: [
         {
-          src: 'pwa-192x192.png',
+          src: 'logo-pilahai-square-transparent-192.png',
           sizes: '192x192',
           type: 'image/png',
         },
         {
-          src: 'pwa-512x512.png',
+          src: 'logo-pilahai-square-transparent-512.png',
           sizes: '512x512',
           type: 'image/png',
-        },
-        {
-          src: 'maskable-icon-512x512.png',
-          sizes: '512x512',
-          type: 'image/png',
-          purpose: 'maskable',
         },
       ],
     },
