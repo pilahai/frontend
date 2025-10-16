@@ -1,2 +1,16 @@
 [build]
-  publish = ".output"
+  command = "bun run build"
+  publish = ".output/public"
+
+[context.production.environment]
+  NUXT_PUBLIC_API_BASE = "/api"
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/server"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/.netlify/functions/server"
+  status = 200

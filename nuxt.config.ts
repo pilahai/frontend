@@ -58,6 +58,6 @@ export default defineNuxtConfig({
     },
   },
   nitro: {
-    preset: 'output'
+    preset: 'netlify'
   }
 })
