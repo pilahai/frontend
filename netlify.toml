@@ -1,2 +1,2 @@
-[context.production.environment]
-  NUXT_PUBLIC_API_BASE = "/api"
+[build]
+  publish = ".output"
