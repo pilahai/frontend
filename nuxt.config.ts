@@ -57,7 +57,4 @@ export default defineNuxtConfig({
       type: 'module',
     },
   },
-  nitro: {
-    preset: 'netlify'
-  }
 })
