@@ -1,3 +1,3 @@
 [build]
   command = "bun run build"
-  publish = ".output/server/index.mjs"
+  publish = ".output/server"
