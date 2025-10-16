@@ -7,7 +7,7 @@
       playsinline
       muted
     ></video>
-    <canvas ref="canvasRef" :width="width" :height="height" style="display: none;"></canvas>
+    <canvas ref="canvasRef" :width="widthToNumber" :height="heightToNumber" style="display: none; object-fit: cover;"></canvas>
 
     <div class="controls">
       <slot></slot>
@@ -45,10 +45,11 @@ const canvasRef = ref<HTMLCanvasElement | null>(null);
 const stream = ref<MediaStream | null>(null);
 const isStreaming = ref<boolean>(false);
 const isPortrait = ref(false);
+const facingMode = ref<'user' | 'environment'>('user');
 
 const videoStyle = computed(() => ({
   filter: props.filter,
-  transform: 'scaleX(-1)',
+  transform: facingMode.value === 'user' ? 'scaleX(-1)' : 'none',
   width: props.width,
   height: props.height,
 }));
@@ -64,8 +65,17 @@ const heightToNumber = computed(() : number => {
     return videoRefHeight ?? 0;
 });
 
+const switchCamera = () => {
+  facingMode.value = facingMode.value === 'user' ? 'environment' : 'user';
+  startStream();
+};
+
 const startStream = async () => {
-  if (isStreaming.value || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+  if (isStreaming.value) {
+    stopStream();
+  }
+
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
     emit('error', 'Browser tidak mendukung atau stream sudah berjalan.');
     return;
   }
@@ -74,7 +84,7 @@ const startStream = async () => {
     isPortrait.value = window.innerHeight > window.innerWidth;
 
     const videoConstraints: MediaTrackConstraints = {
-      facingMode: 'user',
+      facingMode: facingMode.value,
     };
 
     if (isPortrait.value) {
@@ -133,9 +143,12 @@ const takeSnapshot = (): string | null => {
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
 
-    context.translate(canvas.width, 0);
-    context.scale(-1, 1);
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    if (facingMode.value === 'user') {
+      context.translate(canvas.width, 0);
+      context.scale(-1, 1);
+    }
+    
+    context.drawImage(videoRef.value, 0, 0, video.videoWidth, video.videoHeight);
     context.setTransform(1, 0, 0, 1, 0, 0);
 
     const dataUrl = canvas.toDataURL('image/png');
@@ -168,6 +181,7 @@ defineExpose({
   stopStream,
   takeSnapshot,
   isStreaming,
+  switchCamera,
 });
 </script>
 

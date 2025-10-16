@@ -19,6 +19,7 @@
       class="webcam-component"
     >
       <button @click="takePicture" :disabled="!isStreaming" title="Ambil Foto">📸</button>
+      <button @click="switchCamera" :disabled="!isStreaming" title="Switch Camera">🔄</button>
     </Webcam>
 
     <div v-else-if="snapshot" class="snapshot-gallery">
@@ -27,7 +28,7 @@
         :style="{
           backgroundImage: `url(${snapshot})`,
           width: '100%',
-          height: '100%',
+          height: '100%'
         }"
       ></div>
       <div class="controls">
@@ -62,6 +63,10 @@ const startCamera = () => {
 
 const stopCamera = () => {
   webcamRef.value?.stopStream();
+};
+
+const switchCamera = () => {
+  webcamRef.value?.switchCamera();
 };
 
 const takePicture = async () => {
@@ -151,5 +156,6 @@ const handleError = (error: string) => {
   background-attachment: fixed;
   background-position: center;
   background-color: black;
+  background-size: contain;
 }
 </style>
