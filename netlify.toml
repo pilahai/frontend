@@ -1,0 +1,11 @@
+[build]
+  command = "bun run build"
+  publish = ".output/public"
+
+[dev]
+  command = "bun run dev"
+  
+[[redirects]]
+  from = "/*"
+  to = "/.netlify/functions/server"
+  status = 200
