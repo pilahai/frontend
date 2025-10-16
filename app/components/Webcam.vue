@@ -45,7 +45,7 @@ const canvasRef = ref<HTMLCanvasElement | null>(null);
 const stream = ref<MediaStream | null>(null);
 const isStreaming = ref<boolean>(false);
 const isPortrait = ref(false);
-const facingMode = ref<'user' | 'environment'>('user');
+const facingMode = ref<'user' | 'environment'>('environment');
 
 const videoStyle = computed(() => ({
   filter: props.filter,
@@ -87,13 +87,13 @@ const startStream = async () => {
       facingMode: facingMode.value,
     };
 
-    // if (isPortrait.value) {
-    //   videoConstraints.width = { ideal: widthToNumber.value };
-    //   videoConstraints.height = { ideal: heightToNumber.value };
-    // } else {
-    //   videoConstraints.width = { ideal: heightToNumber.value };
-    //   videoConstraints.height = { ideal: widthToNumber.value };
-    // }
+    if (isPortrait.value) {
+      videoConstraints.width = { ideal: widthToNumber.value };
+      videoConstraints.height = { ideal: heightToNumber.value };
+    } else {
+      videoConstraints.width = { ideal: heightToNumber.value };
+      videoConstraints.height = { ideal: widthToNumber.value };
+    }
 
     const mediaStream = await navigator.mediaDevices.getUserMedia({
       video: videoConstraints,
