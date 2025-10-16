@@ -87,13 +87,13 @@ const startStream = async () => {
       facingMode: facingMode.value,
     };
 
-    if (isPortrait.value) {
-      videoConstraints.width = { ideal: heightToNumber.value };
-      videoConstraints.height = { ideal: widthToNumber.value };
-    } else {
-      videoConstraints.width = { ideal: widthToNumber.value };
-      videoConstraints.height = { ideal: heightToNumber.value };
-    }
+    // if (isPortrait.value) {
+    //   videoConstraints.width = { ideal: widthToNumber.value };
+    //   videoConstraints.height = { ideal: heightToNumber.value };
+    // } else {
+    //   videoConstraints.width = { ideal: heightToNumber.value };
+    //   videoConstraints.height = { ideal: widthToNumber.value };
+    // }
 
     const mediaStream = await navigator.mediaDevices.getUserMedia({
       video: videoConstraints,
