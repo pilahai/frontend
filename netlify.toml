@@ -1,11 +1,14 @@
 [build]
   command = "bun run build"
-  publish = "dist"
+  publish = ".output/public"
 
-[dev]
-  command = "bun run dev"
-  
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/server/api/:splat"
+  status = 200
+
 [[redirects]]
   from = "/*"
   to = "/.netlify/functions/server"
   status = 200
+  force = true
