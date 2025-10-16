@@ -12,9 +12,9 @@
           <h1>SCAN ITEM</h1>
           <p>Place item inside the frame. Please keep your device steady.</p>
         </div>
-        <button :disabled="!isStreaming" class="icon-button" title="Riwayat">
+        <NuxtLink to="/history" class="icon-button" title="Riwayat">
            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6v6l4 2"></path><circle cx="12" cy="12" r="10"></circle></svg>
-        </button>
+        </NuxtLink>
       </div>
 
       <!-- Camera Frame -->
@@ -55,11 +55,35 @@
         }"
       ></div>
       <div class="controls">
-        <button @click="startCamera" :disabled="isStreaming" title="Mulai Kamera">▶️</button>
+        <button @click="startCamera" :disabled="isStreaming || classificationInProgress" title="Ambil Ulang">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><polyline points="23 20 23 14 17 14"></polyline><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path></svg>
+        </button>
+      </div>
+      <div v-if="classificationInProgress" class="classification-status">
+        <p>{{ classificationMessage }}</p>
+        <progress :value="classificationProgress" max="100"></progress>
+      </div>
+      <div v-if="classificationResult" class="classification-result">
+        <h3>Hasil Klasifikasi</h3>
+        <ul>
+          <li>
+            {{ classificationResult.classification.label }}: {{ (classificationResult.classification.probability * 100).toFixed(0) }}%
+          </li>
+        </ul>
+        <div v-if="!feedbackSent" class="feedback-buttons">
+          <button @click="sendFeedback('correct')" class="feedback-button correct">👍 Benar</button>
+          <button @click="sendFeedback('wrong')" class="feedback-button wrong">👎 Salah</button>
+        </div>
+        <div v-else class="feedback-thanks">
+          <p>Terima kasih atas masukan Anda!</p>
+        </div>
+      </div>
+       <div v-if="classificationError" class="error-message">
+        <p>⚠️ {{ classificationError }}</p>
       </div>
     </div>
 
-    <div v-if="errorMessage" class="error-message">
+    <div v-if="errorMessage && !snapshot" class="error-message">
       <p>⚠️ {{ errorMessage }}</p>
     </div>
 
@@ -79,11 +103,24 @@ const galleryInput = ref<HTMLInputElement | null>(null);
 const snapshot = ref<string | null>(null);
 const errorMessage = ref<string | null>(null);
 
+const classificationInProgress = ref(false);
+const classificationProgress = ref(0);
+const classificationMessage = ref('');
+const classificationResult = ref<any | null>(null);
+const classificationError = ref<string | null>(null);
+const feedbackSent = ref(false);
+
 const isStreaming = computed(() => webcamRef.value?.isStreaming ?? false);
 
 const startCamera = () => {
   snapshot.value = null;
   errorMessage.value = null;
+  classificationInProgress.value = false;
+  classificationProgress.value = 0;
+  classificationMessage.value = '';
+  classificationResult.value = null;
+  classificationError.value = null;
+  feedbackSent.value = false;
   webcamRef.value?.startStream();
 };
 
@@ -125,24 +162,70 @@ const goBack = () => {
   window.history.length > 1 ? window.history.back() : window.location.href = '/';
 }
 
-async function processImage(url: string) {
-  if (url) {
-    const res = await fetch('/api/classify', {
+async function sendFeedback(feedback: 'correct' | 'wrong') {
+  if (!classificationResult.value) return;
+
+  try {
+    await fetch(`/api/feedback/${classificationResult.value.id}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        image: url,
-      }),
+      body: JSON.stringify({ feedback }),
     });
+    feedbackSent.value = true;
+  } catch (error) {
+    console.error('Failed to send feedback:', error);
+    // Optionally, show an error message to the user
+  }
+}
 
-    const reader = res.body?.getReader();
-    if (reader) {
-      for await (const { event, data } of parseSSE(reader)) {
-        console.log('event', event);
-        console.log('data', data);
+async function processImage(url: string) {
+  if (url) {
+    classificationInProgress.value = true;
+    classificationProgress.value = 0;
+    classificationMessage.value = 'Preparing to upload...';
+    classificationResult.value = null;
+    classificationError.value = null;
+
+    try {
+      const res = await fetch('/api/classify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          image: url,
+        }),
+      });
+
+      const reader = res.body?.getReader();
+      if (reader) {
+        for await (const { event, data } of parseSSE(reader)) {
+          console.log('event', event, data);
+          switch (event) {
+            case 'uploading':
+            case 'classifying':
+            case 'saving':
+              classificationProgress.value = data.progress;
+              classificationMessage.value = data.message;
+              break;
+            case 'done':
+              classificationProgress.value = data.progress;
+              classificationMessage.value = data.message;
+              classificationResult.value = data.data;
+              classificationInProgress.value = false;
+              break;
+            case 'error':
+              classificationError.value = data;
+              classificationInProgress.value = false;
+              break;
+          }
+        }
       }
+    } catch (error) {
+      classificationError.value = 'Failed to connect to the server.';
+      classificationInProgress.value = false;
     }
   }
 }
@@ -346,5 +429,81 @@ const handleError = (error: string) => {
   padding: 8px 16px;
   border-radius: 8px;
   z-index: 30;
+}
+
+.classification-status {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  z-index: 25;
+}
+
+.classification-status progress {
+  width: 100%;
+  margin-top: 10px;
+}
+
+.classification-result {
+  position: absolute;
+  bottom: 80px;
+  left: 16px;
+  right: 16px;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 16px;
+  border-radius: 12px;
+  z-index: 25;
+}
+
+.classification-result h3 {
+  margin-top: 0;
+  text-align: center;
+}
+
+.classification-result ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.classification-result li {
+  padding: 4px 0;
+}
+
+.feedback-buttons {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 16px;
+}
+
+.feedback-button {
+  background: none;
+  border: 1px solid white;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.feedback-button.correct {
+  border-color: #4caf50;
+  color: #4caf50;
+}
+
+.feedback-button.wrong {
+  border-color: #f44336;
+  color: #f44336;
+}
+
+.feedback-thanks {
+  text-align: center;
+  margin-top: 16px;
 }
 </style>
