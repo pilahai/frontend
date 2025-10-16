@@ -88,11 +88,11 @@ const startStream = async () => {
     };
 
     if (isPortrait.value) {
-      videoConstraints.width = { ideal: widthToNumber.value };
-      videoConstraints.height = { ideal: heightToNumber.value };
-    } else {
       videoConstraints.width = { ideal: heightToNumber.value };
       videoConstraints.height = { ideal: widthToNumber.value };
+    } else {
+      videoConstraints.width = { ideal: widthToNumber.value };
+      videoConstraints.height = { ideal: heightToNumber.value };
     }
 
     const mediaStream = await navigator.mediaDevices.getUserMedia({
@@ -148,7 +148,7 @@ const takeSnapshot = (): string | null => {
       context.scale(-1, 1);
     }
     
-    context.drawImage(videoRef.value, 0, 0, video.videoWidth, video.videoHeight);
+    context.drawImage(videoRef.value, 0, 0, canvas.width, canvas.height);
     context.setTransform(1, 0, 0, 1, 0, 0);
 
     const dataUrl = canvas.toDataURL('image/png');

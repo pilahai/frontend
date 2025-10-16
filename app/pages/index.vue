@@ -326,7 +326,7 @@ const handleError = (error: string) => {
   background-attachment: fixed;
   background-position: center;
   background-color: black;
-  background-size: contain;
+  background-size: cover;
 }
 
 .controls {
