@@ -3,19 +3,18 @@
 # =========================================
 FROM node:20-alpine AS builder
 
-# Set workdir
 WORKDIR /app
 
-# Copy dependency files
+# Copy package files
 COPY package*.json ./
 
-# Install dependencies (use npm ci for clean install)
-RUN npm ci
+# Kadang npm ci error di Alpine → pakai npm install
+RUN npm install
 
-# Copy all project files
+# Copy sisa project
 COPY . .
 
-# Build Nuxt for production
+# Build Nuxt app
 RUN npm run build
 
 
@@ -27,19 +26,16 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
-# Pastikan Nuxt server di production mode
 ENV NITRO_PORT=3000
 ENV HOST=0.0.0.0
 
-# Copy only necessary files from builder
+# Copy hasil build
 COPY --from=builder /app/.output ./.output
 COPY --from=builder /app/package*.json ./
 
-# Optional: install only production deps
-RUN npm ci --omit=dev
+# Install deps minimal (biar ada runtime modules)
+RUN npm install --omit=dev
 
-# Expose port
 EXPOSE 3000
 
-# Start Nuxt server
 CMD ["node", ".output/server/index.mjs"]
