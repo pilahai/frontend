@@ -83,7 +83,7 @@ const goBack = () => {
 async function sendFeedback(item: HistoryItem, feedback: 'correct' | 'wrong') {
   try {
     await fetch(`/api/feedback/${item.id}`, {
-      method: 'POST',
+      method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
       },

@@ -167,7 +167,7 @@ async function sendFeedback(feedback: 'correct' | 'wrong') {
 
   try {
     await fetch(`/api/feedback/${classificationResult.value.id}`, {
-      method: 'POST',
+      method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
       },

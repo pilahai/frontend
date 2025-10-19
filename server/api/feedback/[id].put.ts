@@ -1,12 +1,18 @@
-import { defineEventHandler } from 'h3'
-import { useApiBase } from '../../app/composables/useApi';
+import { defineEventHandler, readBody } from 'h3';
+import { useApiBase } from '../../../app/composables/useApi';
 
 export default defineEventHandler(async (event) => {
   const { BASE } = useApiBase();
+  const { id } = event.context.params as { id: string };
+  const body = await readBody(event);
 
   try {
-    const response = await fetch(`${BASE}/classifications`, {
-      method: 'GET',
+    const response = await fetch(`${BASE}/feedback/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
     });
 
     if (!response.ok) {
@@ -15,13 +21,6 @@ export default defineEventHandler(async (event) => {
     }
 
     const respData = await response.json();
-
-    for (const item of respData) {
-      if (item.image_url && !item.image_url.startsWith('http')) {
-        item.image_url = `${BASE}/${item.image_url}`;
-      }
-    }
-
     return respData;
   } catch (err: any) {
     event.res.statusCode = 500;
